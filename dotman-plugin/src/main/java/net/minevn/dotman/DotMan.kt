@@ -20,6 +20,8 @@ import net.minevn.libs.bukkit.db.BukkitDBMigrator
 import net.minevn.libs.db.Transaction
 import org.black_ixx.playerpoints.PlayerPoints
 import org.bstats.bukkit.Metrics
+import org.bstats.charts.CustomChart
+import org.bstats.charts.SimplePie
 import org.bukkit.Bukkit
 import java.util.*
 import java.util.logging.Level
@@ -36,11 +38,11 @@ class DotMan : MineVNPlugin() {
     lateinit var milestones: Milestones private set
     lateinit var milestonesMaster: MilestonesMaster private set
     lateinit var discord: Discord private set
+    lateinit var bstatsMetrics: Metrics private set
 
     override fun onEnable() {
         instance = this
         server.pluginManager.registerEvents(DotManListener(), this)
-        Metrics(this, 23982)
 
         val playerPoints = server.pluginManager.getPlugin("PlayerPoints") as PlayerPoints?
         if (playerPoints == null) {
@@ -54,6 +56,21 @@ class DotMan : MineVNPlugin() {
         AdminCmd.init()
         TopNapCmd.init()
         UpdateChecker.init()
+
+        // region bStats
+        this.bstatsMetrics = Metrics(this, 23982)
+
+        // custom charts
+        val customCharts = mutableListOf<CustomChart>()
+        customCharts.add(SimplePie("database_engine") {
+            dbPool!!.getTypeName()
+        })
+        customCharts.add(SimplePie("card_provider") {
+            config.provider
+        })
+
+        customCharts.forEach(bstatsMetrics::addCustomChart)
+        // end region
     }
 
     private fun migrate() {
